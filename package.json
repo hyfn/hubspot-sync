@@ -1,12 +1,13 @@
 {
   "name": "@hyfn/hubspot-sync",
   "version": "0.0.1",
-  "main": "lib/index.js",
+  "main": "lib/hubspot-sync.js",
   "description": "Hubspot syncing",
   "keywords": [
     "hubspot",
     "sync",
     "transfer",
+    "ftps",
     "ftp",
     "synchronise"
   ],
@@ -15,35 +16,53 @@
     "email": "shaun@hyfn.com",
     "url": "http://hyfn.com"
   },
-  "homepage": "https://github.com/BreadboxDigital/hubspot-sync",
+  "homepage": "https://github.com/hyfn/hubspot-sync",
   "repository": {
     "type": "git",
-    "url": "https://github.com/BreadboxDigital/hubspot-sync.git"
+    "url": "https://github.com/hyfn/hubspot-sync.git"
   },
   "bugs": {
     "url": "https://github.com/hyfn/hubspot-sync/issues"
   },
   "license": "MIT",
-  "main": "lib/index.js",
-  "bin": "bin/index",
-  "preferGlobal": true,
   "engines": {
     "node": "*"
   },
   "scripts": {
-    "prepublish": "node_modules/babel-cli/bin/babel.js src --out-dir lib"
+    "clean": "rm -r ./lib/*",
+    "server": "node ./test/nodeftpd.js",
+    "test": "jest",
+    "localprepublish": "npm run clean ; node_modules/babel-cli/bin/babel.js src --out-dir lib --no-comments"
   },
   "devDependencies": {
     "babel-cli": "^6.24.0",
-    "babel-preset-es2015": "^6.24.0"
+    "babel-eslint": "^7.2.1",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-preset-es2015": "^6.24.0",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.1.3",
+    "eslint-plugin-async-await": "^0.0.0",
+    "eslint-plugin-import": "^2.2.0",
+    "jest": "^19.0.2"
   },
   "dependencies": {
-    "ftpsync": "^0.2.0"
+    "ascii-progress": "^1.0.5",
+    "async": "^2.3.0",
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "ftps": "^1.1.0",
+    "ftpsync": "0.1.10",
+    "js-yaml": "^3.8.3"
   },
   "browserDependencies": {
-    "ftpsync": "^0.2.0"
+    "ftps": "^0.2.0"
   },
   "babel": {
-    "presets": ["es2015"]
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      "transform-object-rest-spread"
+    ]
   }
 }
