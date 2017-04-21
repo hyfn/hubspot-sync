@@ -48,10 +48,12 @@
   "dependencies": {
     "ascii-progress": "^1.0.5",
     "async": "^2.3.0",
+    "cli-spinner": "^0.2.6",
     "colors": "^1.1.2",
     "commander": "^2.9.0",
     "ftps": "^1.1.0",
     "ftpsync": "0.1.10",
+    "glob-fs": "^0.1.6",
     "js-yaml": "^3.8.3"
   },
   "browserDependencies": {

@@ -15,6 +15,7 @@ const additional = [
   'set ssl:verify-certificate no',
   'set cmd:fail-exit yes',
   'set ftp:list-options -la',
+  'set net:max-retries 0',
 ];
 
 const defaults = {
@@ -36,6 +37,9 @@ export default function(configPath = './config.yml') {
   let opts = {};
   try {
     opts = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'));
+    if (opts.additional) {
+      defaults.additionalLftpCommands = additional.concat(opts.additional).join(';');
+    }
   } catch (e) {
     throw new Error('Unable to load config file, ensure config.yml is found');
   }
