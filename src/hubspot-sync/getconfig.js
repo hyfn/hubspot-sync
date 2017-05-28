@@ -1,4 +1,4 @@
-/* eslint-disable no-console, no-undef */
+/* eslint-disable no-console, no-undef, no-useless-escape */
 
 import fs from 'fs';
 import yaml from 'js-yaml';
@@ -24,7 +24,7 @@ const defaults = {
   host: 'ftp.hubapi.com',
   protocol: 'ftp',
   addProtocol: false,
-  mirrorOptions: '-vvv --transfer-all --parallel=10',
+  mirrorOptions: '-vv -p --transfer-all --parallel=10 --exclude \.DS_Store',
   additionalLftpCommands: additional.join(';'),
   port: 3200,
   ignore: [

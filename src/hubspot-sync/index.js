@@ -11,6 +11,8 @@ import colors from 'colors'; // eslint-disable-line
 const glob = require('glob-fs')({ gitignore: true });
 
 const identity = () => null;
+const showSuccessResponse = file => outputLine({ str: file, type: 'file', color: 'green' });
+const showFailedResponse = file => outputLine({ str: `${file}, failed to upload`, type: 'file', color: 'red' });
 
 const HubspotSync = (cfgPath = './config.yml') => {
   const opts = getconfig(cfgPath);
@@ -131,10 +133,40 @@ const HubspotSync = (cfgPath = './config.yml') => {
       });
     },
     deploy() {
+      return new Promise((resolve, reject) => {
+        const { remoteFileDir, localFileDir } = opts;
+        ftps
+          .raw(`lcd ${localFileDir}`)
+          .raw(`cd ${remoteFileDir}`)
+          .mirror({
+            remoteDir: remoteFileDir,
+            localDir: localFileDir,
+            options: opts.mirrorOptions,
+            upload: true,
+          })
+          .exec((err, resp) => {
+            if (err) {
+              reject(err);
+            } else
+            if (resp.error) {
+              reject(resp.error);
+            } else
+            if (resp.data) {
+              resp.data.split('\n').forEach(
+                (item) => {
+                  if (item) {
+                    showSuccessResponse(item);
+                  }
+                },
+              );
+              resolve(resp.data);
+            }
+          });
+      });
+    },
+    deploySafe() {
       const self = this;
       const promises = [];
-      const showSuccessResponse = file => outputLine({ str: file, type: 'file', color: 'green' });
-      const showFailedResponse = file => outputLine({ str: `${file}, failed to upload`, type: 'file', color: 'red' });
       const filePaths = [
         { local: opts.localFileDir, remote: opts.remoteFileDir },
       ];

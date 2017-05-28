@@ -21,7 +21,7 @@ program
         console.log('Start deploy');
         new HubspotSync(program.config || './config.yml').deploy().then(
           () => {
-            console.log('PushSafe complete'.green);
+            console.log('Deploy complete'.green);
           },
           (err) => {
             console.error(`deploy failed ${err}`.red);
