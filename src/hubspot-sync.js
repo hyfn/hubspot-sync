@@ -1,7 +1,7 @@
 /* eslint-disable no-console, no-underscore-dangle, no-new */
 
 import program from 'commander';
-import colors from 'colors';
+import colors from 'colors'; // eslint-disable-line
 import pkg from '../package.json';
 import HubspotSync from './hubspot-sync/index';
 
@@ -17,16 +17,18 @@ program
   .arguments('<cmd>')
   .action((cmd) => {
     switch (cmd) {
-      case 'pull':
-        console.log('Start Pull (Mirror Local to Remote)');
-        new HubspotSync(program.config || './config.yml').pull().then(
-          (data) => {
-            console.log(data.green);
-            console.log('Pull complete');
+      case 'deploy': {
+        console.log('Start deploy');
+        new HubspotSync(program.config || './config.yml').deploy().then(
+          () => {
+            console.log('PushSafe complete'.green);
           },
-          err => console.error('Pull failed', err),
+          (err) => {
+            console.error(`deploy failed ${err}`.red);
+          },
         );
         break;
+      }
       default:
         console.error('no command given!');
     }

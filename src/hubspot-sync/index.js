@@ -2,20 +2,33 @@
 
 import FTPS from 'ftps';
 import getconfig from './getconfig';
+import tree from './utils/tree';
+import outputLine from './utils/output-line';
+import buildLocalFileTree from './utils/local-file-tree';
+import flattenLocalFileTree from './utils/flatten-local-file-tree';
+import colors from 'colors'; // eslint-disable-line
+
+const glob = require('glob-fs')({ gitignore: true });
+
+const identity = () => null;
 
 const HubspotSync = (cfgPath = './config.yml') => {
   const opts = getconfig(cfgPath);
   const ftps = new FTPS(opts);
 
-  const log = {
-    verbose: opts.verbose || false,
-    write: opts.log || console.log,
-    info: opts.info || console.info,
-    error: opts.error || console.error,
-    warn: opts.warn || console.warn
-  };
-
   return {
+    mkRemoteDir(path) {
+      return new Promise((resolve) => {
+        ftps
+          .raw(`mkdir -p ${path}`)
+          .exec((err) => {
+            if (err) {
+              throw new Error(err);
+            }
+            return resolve(null);
+          });
+      });
+    },
     find(path) {
       return new Promise((resolve, reject) => {
         ftps
@@ -26,12 +39,22 @@ const HubspotSync = (cfgPath = './config.yml') => {
               throw new Error(err);
             }
             if (resp.data) {
+              const d = resp.data.split('\n')
+                          .map(file => ftps.escapeshell(`${file}`));
               return resolve(
-                resp.data.split('\n').map(file => ftps.escapeshell(`${path}/${file}`)),
+                tree(path, d),
               );
             }
             return reject(null);
           });
+      });
+    },
+    findLocal(path, processStream = identity) {
+      return new Promise((resolve) => {
+        process.chdir(path);
+        glob.readdirStream('**/*') // make this work as a stream
+          .on('data', file => processStream(file))
+          .on('end', function() { resolve(this.files); });
       });
     },
     ls(path) {
@@ -72,55 +95,65 @@ const HubspotSync = (cfgPath = './config.yml') => {
           });
       });
     },
-    deploy() {
-      throw new Error('in process');
-      // new Promise((resolve) => {
-      //   const { remoteDir, localDir } = opts;
-      //   ftps
-      //     .cd(opts.remoteDir)
-      //     .mirror({ remoteDir, localDir, options: opts.mirrorOptions })
-      //     .exec((err, resp) => {
-      //       if (err) {
-      //         throw new Error(err);
-      //       }
-      //       if (resp.data) {
-      //         resolve(resp.data);
-      //       }
-      //     });
-      // });
-    },
-    put() {
-      throw new Error('in process');
-      // new Promise((resolve) => {
-      //   const { remoteDir, localDir } = opts;
-      //   ftps
-      //     .cd(opts.remoteDir)
-      //     .mirror({ localDir, remoteDir, options: opts.mirrorOptions })
-      //     .exec((err, resp) => {
-      //       if (err) {
-      //         throw new Error(err);
-      //       }
-      //       if (resp.data) {
-      //         resolve(resp.data);
-      //       }
-      //     });
-      // });
-    },
-    pull() {
-      return new Promise((resolve) => {
-        const { remoteDir, localDir } = opts;
+    getFile(remoteFile, localFile) {
+      return new Promise((resolve, reject) => {
         ftps
-          .cd(opts.remoteDir)
-          .mirror({ remoteDir, localDir, options: opts.mirrorOptions })
+          .raw(`get ${remoteFile} -o ${localFile}`)
           .exec((err, resp) => {
             if (err) {
-              throw new Error(err);
+              reject(err);
             }
-            if (resp.data) {
-              resolve(resp.data);
+            if (resp.error) {
+              reject(resp.error);
             }
+            resolve(resp);
           });
       });
+    },
+    getFilePath() {
+      //
+    },
+    putFile({ file, local, remote }) {
+      return new Promise((resolve, reject) => {
+        ftps
+          .raw(`lcd ${local}`)
+          .raw(`cd ${remote}`)
+          .raw(`mput ${file}`)
+          .exec((err, resp) => {
+            if (err) {
+              reject(err);
+            }
+            if (resp.error) {
+              reject(resp.error);
+            }
+            resolve(resp);
+          });
+      });
+    },
+    deploy() {
+      const self = this;
+      const promises = [];
+      const showSuccessResponse = file => outputLine({ str: file, type: 'file', color: 'green' });
+      const showFailedResponse = file => outputLine({ str: `${file}, failed to upload`, type: 'file', color: 'red' });
+      const filePaths = [
+        { local: opts.localFileDir, remote: opts.remoteFileDir },
+      ];
+
+      return buildLocalFileTree(filePaths, this.findLocal).then(files =>
+        new Promise(() => {
+          const list = flattenLocalFileTree(files);
+
+          promises.push(list.map(data =>
+            self.putFile(data).then(
+              () => showSuccessResponse(data.file),
+              () => showFailedResponse(data.file),
+            ),
+          ));
+          return Promise.all(promises);
+        },
+        err => err,
+        ),
+      );
     },
   };
 };
