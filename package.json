@@ -28,6 +28,7 @@
   "engines": {
     "node": "*"
   },
+  "bin": "./lib/hubspot-sync.js",
   "scripts": {
     "clean": "rm -r ./lib/*",
     "server": "node ./test/nodeftpd.js",
