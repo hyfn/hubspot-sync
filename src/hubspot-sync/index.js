@@ -132,6 +132,37 @@ const HubspotSync = (cfgPath = './config.yml') => {
           });
       });
     },
+    sync() {
+      return new Promise((resolve, reject) => {
+        const { remoteFileDir, localFileDir } = opts;
+        ftps
+          .raw(`lcd ${localFileDir}`)
+          .raw(`cd ${remoteFileDir}`)
+          .mirror({
+            remoteDir: remoteFileDir,
+            localDir: localFileDir,
+            options: opts.mirrorOptions,
+          })
+          .exec((err, resp) => {
+            if (err) {
+              reject(err);
+            } else
+            if (resp.error) {
+              reject(resp.error);
+            } else
+            if (resp.data) {
+              resp.data.split('\n').forEach(
+                (item) => {
+                  if (item) {
+                    showSuccessResponse(item);
+                  }
+                },
+              );
+              resolve(resp.data);
+            }
+          });
+      });
+    },
     deploy() {
       return new Promise((resolve, reject) => {
         const { remoteFileDir, localFileDir } = opts;

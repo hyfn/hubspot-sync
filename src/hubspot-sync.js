@@ -29,6 +29,18 @@ program
         );
         break;
       }
+      case 'sync': {
+        console.log('Start syncing');
+        new HubspotSync(program.config || './config.yml').sync().then(
+          () => {
+            console.log('Sync complete'.green);
+          },
+          (err) => {
+            console.error(`Sync failed ${err}`.red);
+          },
+        );
+        break;
+      }
       default:
         console.error('no command given!');
     }
